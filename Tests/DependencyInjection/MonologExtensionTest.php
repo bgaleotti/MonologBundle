@@ -193,6 +193,29 @@ class MonologExtensionTest extends DependencyInjectionTest
         $this->assertDICDefinitionClass($handler, '%monolog.handler.raven.class%');
     }
 
+    public function testAmqpHandler()
+    {
+        try {
+            $this->getContainer(array(array('handlers' => array('amqp' => array('type' => 'amqp')))));
+            $this->fail();
+        } catch (InvalidConfigurationException $e) {
+            $this->assertContains('host', $e->getMessage());
+        }
+
+        $container = $this->getContainer(array(array('handlers' => array('amqp' => array(
+            'type' => 'amqp', 'host' => 'localhost', 'login' => 'guest', 'password' => 'guest', 'port' => 5672,
+            'vhost' => '/', 'exchange_name' => 'log' )
+        ))));
+        $this->assertTrue($container->hasDefinition('monolog.logger'));
+        $this->assertTrue($container->hasDefinition('monolog.handler.amqp'));
+
+        $logger = $container->getDefinition('monolog.logger');
+        $this->assertDICDefinitionMethodCallAt(0, $logger, 'pushHandler', array(new Reference('monolog.handler.amqp')));
+
+        $handler = $container->getDefinition('monolog.handler.amqp');
+        $this->assertDICDefinitionClass($handler, '%monolog.handler.amqp.class%');
+    }
+
     protected function getContainer(array $config = array())
     {
         $container = new ContainerBuilder();

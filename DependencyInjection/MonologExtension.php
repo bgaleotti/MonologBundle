@@ -319,6 +319,47 @@ class MonologExtension extends Extension
             ));
             break;
 
+        case 'amqp':
+            $connection = new Definition('AMQPConnection');
+            if (isset($handler['host'])) {
+                $connection->addMethodCall('setHost', array($handler['host']));
+            }
+            if (isset($handler['login'])) {
+                $connection->addMethodCall('setLogin', array($handler['login']));
+            }
+            if (isset($handler['password'])) {
+                $connection->addMethodCall('setPassword', array($handler['password']));
+            }
+            if (isset($handler['timeout'])) {
+                $connection->addMethodCall('setTimeout', array($handler['timeout']));
+            }
+            if (isset($handler['vhost'])) {
+                $connection->addMethodCall('setVhost', array($handler['vhost']));
+            }
+            $connection->addMethodCall('connect');
+            $connection->setPublic(false);
+            $container->setDefinition($connectionId = 'monolog.amqp.connection', $connection);
+
+            $channel = new Definition('AMQPChannel', array(
+                new Reference($connectionId),
+            ));
+            $channel->setPublic(false);
+            $container->setDefinition($channelId = 'monolog.amqp.channel', $channel);
+
+            $exchange = new Definition('AMQPExchange', array(
+                new Reference($channelId),
+            ));
+            $exchange->setPublic(false);
+            $container->setDefinition($exchangeId = 'monolog.amqp.exchange', $exchange);
+
+            $definition->setArguments(array(
+                new Reference($exchangeId),
+                $handler['exchange_name'],
+                $handler['level'],
+                $handler['bubble'],
+            ));
+            break;
+
         // Handlers using the constructor of AbstractHandler without adding their own arguments
         case 'test':
         case 'null':

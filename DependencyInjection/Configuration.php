@@ -118,7 +118,7 @@ class Configuration implements ConfigurationInterface
                                 ->end()
                             ->end()
                             ->scalarNode('connection_string')->end() // socket_handler
-                            ->scalarNode('timeout')->end() // socket_handler
+                            ->scalarNode('timeout')->end() // socket_handler and amqp
                             ->scalarNode('connection_timeout')->end() // socket_handler
                             ->booleanNode('persistent')->end() // socket_handler
                             ->scalarNode('dsn')->end() // raven_handler
@@ -178,6 +178,12 @@ class Configuration implements ConfigurationInterface
                                     })
                                 ->end()
                             ->end()
+                            ->scalarNode('host')->end() // amqp
+                            ->scalarNode('login')->end() // amqp
+                            ->scalarNode('password')->end() // amqp
+                            ->scalarNode('port')->end() // amqp
+                            ->scalarNode('vhost')->end() // amqp
+                            ->scalarNode('exchange_name')->end() // amqp
                             ->arrayNode('channels')
                                 ->fixXmlConfig('channel', 'elements')
                                 ->canBeUnset()
@@ -265,6 +271,10 @@ class Configuration implements ConfigurationInterface
                         ->validate()
                             ->ifTrue(function($v) { return 'raven' === $v['type'] && !array_key_exists('dsn', $v); })
                             ->thenInvalid('The DSN has to be specified to use a RavenHandler')
+                        ->end()
+                        ->validate()
+                            ->ifTrue(function($v) { return 'amqp' === $v['type'] && !array_key_exists('host', $v) && !array_key_exists('login', $v) && !array_key_exists('password', $v) && !array_key_exists('port', $v) && !array_key_exists('vhost', $v) && !array_key_exists('exchange_name', $v); })
+                            ->thenInvalid('The host, login, password, port, vhost and exchange_name has to be specified to use a AMQPHandler')
                         ->end()
                     ->end()
                     ->validate()
